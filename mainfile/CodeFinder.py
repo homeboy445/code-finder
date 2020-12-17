@@ -82,7 +82,7 @@ try:
                     i+=1
         return lps
 
-    def KmpAlgorithm(txt,pat):
+    def Match_Strings(txt,pat):
         try:
             if txt==None or pat==None:
                 return False
@@ -122,7 +122,7 @@ try:
     for item in file_data:
         for k in file_data[item]:
             for mnt in data_to_be_matched:
-                if KmpAlgorithm(k,mnt) and FileNameParser(item)!="CodeFinder.py":
+                if Match_Strings(k,mnt) and FileNameParser(item)!="CodeFinder.py":
                     poss_file.add(item)
 
     print("Results...")
