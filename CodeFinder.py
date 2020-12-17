@@ -3,12 +3,16 @@ from time import sleep #for debugging use time.sleep(time(in ms))
 
 try:
     print("Welcome to the code finder!")
+    print("Find excerpts from java , cpp or py codes easily")
     print("please specify the file path for the code you want to search")
     print("in the present directory only!")
+    print("Please append your file/folder with the present working directory")
+    print("pwd:",os.getcwd())
+    print("Note:this finder will list all the files which have more than zero lines")
+    print("matching!")
     fpath=input("Enter here(format->(folder/file)):")
 
     data_to_be_matched=open(os.path.join(os.getcwd(),fpath),'r',encoding='utf-8').read()
-
     def is_py(file):
         s=''
         go=0
@@ -17,7 +21,7 @@ try:
                 s+=f
             if(f=='.'):
                 go=1
-        return s=='py'
+        return s=='py' or s=='cpp' or s=='java'
 
     def list_files(dir):
         r = []
@@ -56,31 +60,54 @@ try:
 
     data=list_files(os.getcwd())
     file_data={}
-    for d in data: #It could also be used to find specific types of files in a folder!
+    for d in data:
         if(is_py(d)):
             disj=is_disjoint(d)
             file=open(os.path.join(os.getcwd(),d),'r',encoding='utf-8')
             file_data[d]=nwlinefree(file.read())
 
-    def Match_Count(source,target):
-        if(len(source)!=len(target)):
-            return 0
-        cnt=0
-        for i in range(len(source)):
-            if(source[i]==target[i]):
-                cnt+=1
-        return cnt
+    def ComputeLpsArray(lps,pat):
+        i=1
+        ln=0
+        while(i<len(pat)):
+            if(pat[i]==pat[ln]):
+                ln+=1
+                lps[i]=ln
+                i+=1
+            else:
+                if ln!=0:
+                    ln=lps[ln-1]
+                else:
+                    lps[i]=0
+                    i+=1
+        return lps
 
-    data_to_be_matched=nwlinefree(data_to_be_matched)
-    poss_file={}
-
-    for item in file_data:
-        for k in file_data[item]:
-            for mnt in data_to_be_matched:
-                cnt=Match_Count(k,mnt)
-            if(cnt==0):
-                continue
-            poss_file[cnt]=item
+    def KmpAlgorithm(txt,pat):
+        try:
+            if txt==None or pat==None:
+                return False
+            if(len(pat)==len(txt)):
+                return pat==txt
+            if(len(txt)<len(pat)):
+                txt,pat=pat,txt
+            i=0
+            j=0
+            lps=[0]*len(pat)
+            lps=ComputeLpsArray(lps,pat)
+            while(i<len(txt)):
+                if(txt[i]==pat[j]):
+                    i+=1
+                    j+=1
+                if(j==len(pat)):
+                    return True
+                elif i<len(txt) and txt[i]!=pat[j]:
+                    if j!=0:
+                        j=lps[j-1]
+                    else:
+                        i+=1
+            return False
+        except:
+            return False
 
     def FileNameParser(name):
         s=''
@@ -89,14 +116,24 @@ try:
                 return s[::-1]
             s+=name[i]
 
-    print("Results...")
+    data_to_be_matched=nwlinefree(data_to_be_matched+'\n')
 
-    if not len(poss_file.keys()):
+    poss_file=set()
+    for item in file_data:
+        for k in file_data[item]:
+            for mnt in data_to_be_matched:
+                if KmpAlgorithm(k,mnt) and FileNameParser(item)!="CodeFinder.py":
+                    poss_file.add(item)
+
+    print("Results...")
+    Result={}
+    if not len(poss_file):
         print("No Match Found!")
     else:
-        print(len(poss_file.keys()),' Match found!')
-        for k in reversed(sorted(poss_file.keys())):
-            print("File name:",FileNameParser(poss_file[k]))
-            print("File path:",poss_file[k])
-except:
+        print("{} Match(s) found!".format(len(poss_file)))
+        for k in poss_file:
+            print("File Name:",FileNameParser(k))
+            print("File path:",k)
+except Exception as e:
     print("Oops! Looks like something is not right!")
+    print("seems like:",e)
